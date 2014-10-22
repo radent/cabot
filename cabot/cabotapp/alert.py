@@ -5,6 +5,8 @@ from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.template import Context, Template
 
+from twilio.rest.resources import Connection as TwilioConnection
+from twilio.rest.resources.connection import PROXY_TYPE_HTTP
 from twilio.rest import TwilioRestClient
 from twilio import twiml
 import requests
@@ -110,9 +112,17 @@ def _send_hipchat_alert(message, color='green', sender='Cabot'):
     })
 
 
+def _get_twilio_client():
+    if settings.TWILIO_HTTP_PROXY_HOST:
+        TwilioConnection.set_proxy_info(
+            settings.TWILIO_HTTP_PROXY_HOST,
+            int(settings.TWILIO_HTTP_PROXY_PORT),
+            proxy_type=PROXY_TYPE_HTTP)
+    return TwilioRestClient(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+
+
 def send_sms_alert(service, users, duty_officers):
-    client = TwilioRestClient(
-        settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+    client = _get_twilio_client()
     mobiles = [u.profile.prefixed_mobile_number for u in users if hasattr(
         u, 'profile') and u.profile.mobile_number]
     if service.is_critical:
@@ -140,8 +150,7 @@ def send_telephone_alert(service, users, duty_officers):
     # No need to call to say things are resolved
     if service.overall_status != service.CRITICAL_STATUS:
         return
-    client = TwilioRestClient(
-        settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+    client = _get_twilio_client()
     mobiles = [u.profile.prefixed_mobile_number for u in duty_officers if hasattr(
         u, 'profile') and u.profile.mobile_number]
     url = 'http://%s%s' % (settings.WWW_HTTP_HOST,
