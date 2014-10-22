@@ -62,6 +62,7 @@ check_group_mixin_fields = (
 router.register(r'services', create_viewset(
     arg_model=models.Service, 
     arg_fields=check_group_mixin_fields + (
+        'instances',
         'url',
     ),
 ))
@@ -122,8 +123,10 @@ router.register(r'jenkins_checks', create_viewset(
     ),
 ))
 
-'''
-Omitting user API, could expose/allow modifying dangerous fields.
+
+### Omitting user API, could expose/allow modifying dangerous fields.
+
+# Enable user API.  Danger is our... middle name.
 
 router.register(r'users', create_viewset(
     arg_model=django_models.User,
@@ -148,7 +151,6 @@ router.register(r'user_profiles', create_viewset(
         'fallback_alert_user',
     ),
 ))
-'''
 
 router.register(r'shifts', create_viewset(
     arg_model=models.Shift,
