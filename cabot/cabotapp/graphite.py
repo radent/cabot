@@ -1,5 +1,6 @@
 from django.conf import settings
 import requests
+import time
 import logging
 
 graphite_api = settings.GRAPHITE_API
@@ -52,7 +53,7 @@ def get_all_metrics(limit=None):
     return metrics
 
 
-def parse_metric(metric, mins_to_check=5):
+def parse_metric(metric, mins_to_check=5, max_age=60):
     """
     Returns dict with:
     - num_series_with_data: Number of series with data
@@ -76,12 +77,29 @@ def parse_metric(metric, mins_to_check=5):
         logging.error('Error getting data from Graphite: %s' % e)
         return ret
     all_values = []
+    now = int(time.time())
+    start_time = now - (mins_to_check * 60) - 5
     for target in data:
-        values = [float(t[0])
-                  for t in target['datapoints'][-mins_to_check:] if t[0] is not None]
-        if values:
+        # Original code assumes data points are 1 minute apart.
+        #values = [float(t[0])
+        #          for t in target['datapoints'][-mins_to_check:] if t[0] is not None]
+
+        # Discover all non-null values from -mins_to_check till now.
+        values = []
+        newest_time = 0
+        for ts_value in target['datapoints']:
+            if ts_value[0] is None:
+                continue
+            if ts_value[1] >= start_time:
+                values.append(float(ts_value[0]))
+                if ts_value[1] > newest_time:
+                    newest_time = ts_value[1]
+
+        # If newest value is new enough, count the series.
+        if values and newest_time > (now - max_age):
             ret['num_series_with_data'] += 1
         else:
+            values = []
             ret['num_series_no_data'] += 1
         all_values.extend(values)
     if all_values:

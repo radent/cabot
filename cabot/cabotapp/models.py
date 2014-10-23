@@ -384,6 +384,15 @@ class StatusCheck(PolymorphicModel):
         help_text='The minimum number of data series (hosts) you expect to see.',
     )
 
+    #### Radiant ####
+    max_age = models.IntegerField(
+        default=60,
+        null=True,
+        help_text='Discard data series if values are newer than this many seconds.',
+    )
+
+    #################
+
     # HTTP checks
     endpoint = models.TextField(
         null=True,
@@ -568,7 +577,8 @@ class GraphiteStatusCheck(StatusCheck):
         )
 
     def _run(self):
-        series = parse_metric(self.metric, mins_to_check=self.frequency)
+        series = parse_metric(
+            self.metric, mins_to_check=self.frequency, max_age=self.max_age)
         failure_value = None
         if series['error']:
             failed = True
