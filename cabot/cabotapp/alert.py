@@ -102,7 +102,15 @@ def _send_hipchat_alert(message, color='green', sender='Cabot'):
     room = settings.HIPCHAT_ALERT_ROOM
     api_key = settings.HIPCHAT_API_KEY
     url = settings.HIPCHAT_URL
-    resp = requests.post(url + '?auth_token=' + api_key, data={
+    proxies = {}
+    if settings.ALERT_HTTP_PROXY_HOST:
+       proxy_url = 'http://%s:%s' % (
+         settings.ALERT_HTTP_PROXY_HOST, settings.ALERT_HTTP_PROXY_PORT)
+       proxies = {
+          'http': proxy_url,
+          'https': proxy_url,
+       }
+    resp = requests.post(url + '?auth_token=' + api_key, proxies=proxies, data={
         'room_id': room,
         'from': sender[:15],
         'message': message,
@@ -113,10 +121,10 @@ def _send_hipchat_alert(message, color='green', sender='Cabot'):
 
 
 def _get_twilio_client():
-    if settings.TWILIO_HTTP_PROXY_HOST:
+    if settings.ALERT_HTTP_PROXY_HOST:
         TwilioConnection.set_proxy_info(
-            settings.TWILIO_HTTP_PROXY_HOST,
-            int(settings.TWILIO_HTTP_PROXY_PORT),
+            settings.ALERT_HTTP_PROXY_HOST,
+            int(settings.ALERT_HTTP_PROXY_PORT),
             proxy_type=PROXY_TYPE_HTTP)
     return TwilioRestClient(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
