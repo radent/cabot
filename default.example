@@ -1,0 +1,60 @@
+##############################################################
+#
+#                 CABOT CONFIGURATION
+#
+##############################################################
+
+# Basic Cabot web app settings.
+LOG_FILE="/opt/cabot/log/cabot.log"
+ADMIN_EMAIL="you@example.com"
+CABOT_FROM_EMAIL="noreply@example.com"
+HIPCHAT_URL="https://api.hipchat.com/v1/rooms/message"
+
+# Uncomment to enable debug logging.
+# DEBUG=t
+
+# System time zone.
+TIME_ZONE="Etc/UTC"
+
+# Django random salt for storing secrets.
+DJANGO_SECRET_KEY="thisisnotreallyasecretandyoushouldchangethisbeforedeployinganywhere"
+
+# Graphite
+GRAPHITE_API="http://graphite.example.com/"
+GRAPHITE_USER="username"
+GRAPHITE_PASS="password"
+
+# Links in alerts.
+WWW_HTTP_HOST="cabot.example.com"
+WWW_SCHEME="http"
+
+# SMS
+TWILIO_ACCOUNT_SID="your_account_sid"
+TWILIO_AUTH_TOKEN="your_auth_token"
+TWILIO_OUTGOING_NUMBER="+01189998819991197253"
+
+# PostGreSQL
+DATABASE_URL="postgres://user:pass@postgres.example.com:5432/database"
+
+# Broker
+CELERY_BROKER_URL="redis://redis.example.com:6379/1"
+
+# SMTP
+SES_HOST="smtp.example.com"
+SES_USER=""
+SES_PASS=""
+SES_PORT="225"
+
+# Rota calendar
+CALENDAR_ICAL_URL="http://www.google.com/calendar/ical/example.ics"
+
+# Jenkins
+# JENKINS_API="https://jenkins.example.com/"
+# JENKINS_USER=username
+# JENKINS_PASS=password
+
+# Hipchat
+# HIPCHAT_ALERT_ROOM=48052
+# HIPCHAT_API_KEY=your_hipchat_api_key
+
+

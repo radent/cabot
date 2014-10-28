@@ -1,0 +1,2 @@
+#!/bin/bash
+/usr/local/bin/cabot_env.sh /usr/bin/python manage.py $*
