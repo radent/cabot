@@ -104,11 +104,13 @@ def _send_hipchat_alert(message, color='green', sender='Cabot'):
     url = settings.HIPCHAT_URL
     proxies = {}
     if settings.ALERT_HTTP_PROXY_HOST:
-        proxy_url = 'http://%s:%s' % (
+        http_proxy_url = 'http://%s:%s' % (
+            settings.ALERT_HTTP_PROXY_HOST, settings.ALERT_HTTP_PROXY_PORT)
+        https_proxy_url = 'https://%s:%s' % (
             settings.ALERT_HTTP_PROXY_HOST, settings.ALERT_HTTP_PROXY_PORT)
         proxies = {
-            'http': proxy_url,
-            'https': proxy_url,
+            'http': http_proxy_url,
+            'https': https_proxy_url,
         }
     resp = requests.post(url + '?auth_token=' + api_key, proxies=proxies, data={
         'room_id': room,
