@@ -104,12 +104,12 @@ def _send_hipchat_alert(message, color='green', sender='Cabot'):
     url = settings.HIPCHAT_URL
     proxies = {}
     if settings.ALERT_HTTP_PROXY_HOST:
-       proxy_url = 'http://%s:%s' % (
-         settings.ALERT_HTTP_PROXY_HOST, settings.ALERT_HTTP_PROXY_PORT)
-       proxies = {
-          'http': proxy_url,
-          'https': proxy_url,
-       }
+        proxy_url = 'http://%s:%s' % (
+            settings.ALERT_HTTP_PROXY_HOST, settings.ALERT_HTTP_PROXY_PORT)
+        proxies = {
+            'http': proxy_url,
+            'https': proxy_url,
+        }
     resp = requests.post(url + '?auth_token=' + api_key, proxies=proxies, data={
         'room_id': room,
         'from': sender[:15],
@@ -118,6 +118,8 @@ def _send_hipchat_alert(message, color='green', sender='Cabot'):
         'color': color,
         'message_format': 'text',
     })
+    if resp.status_code != requests.codes.ok:
+        logger.exception('Failed to send HipChat message (%d): %s' % (resp.status_code, resp.text))
 
 
 def _get_twilio_client():
