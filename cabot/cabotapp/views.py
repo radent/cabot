@@ -3,12 +3,13 @@ from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse_lazy
+from django.core.exceptions import PermissionDenied
 from django.conf import settings
 from models import (
     StatusCheck, GraphiteStatusCheck, JenkinsStatusCheck, HttpStatusCheck, ICMPStatusCheck,
     StatusCheckResult, UserProfile, Service, Instance, Shift, get_duty_officers)
 from tasks import run_status_check as _run_status_check
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.utils.decorators import method_decorator
 from django.views.generic import (
     DetailView, CreateView, UpdateView, ListView, DeleteView, TemplateView)
@@ -27,11 +28,20 @@ import json
 import re
 
 
+
 class LoginRequiredMixin(object):
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(LoginRequiredMixin, self).dispatch(*args, **kwargs)
+
+
+class PermRequiredMixin(object):
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.has_perm(self.required_permission):
+            raise PermissionDenied
+        return super(PermRequiredMixin, self).dispatch(request, *args, **kwargs)
 
 
 @login_required
@@ -384,7 +394,7 @@ class StatusCheckReportForm(forms.Form):
         return checks
 
 
-class CheckCreateView(LoginRequiredMixin, CreateView):
+class CheckCreateView(PermRequiredMixin, CreateView):
     template_name = 'cabotapp/statuscheck_form.html'
 
     def form_valid(self, form):
@@ -426,7 +436,7 @@ class CheckCreateView(LoginRequiredMixin, CreateView):
         return reverse('checks')  
 
 
-class CheckUpdateView(LoginRequiredMixin, UpdateView):
+class CheckUpdateView(PermRequiredMixin, UpdateView):
     template_name = 'cabotapp/statuscheck_form.html'
 
     def get_success_url(self):
@@ -435,33 +445,40 @@ class CheckUpdateView(LoginRequiredMixin, UpdateView):
 class ICMPCheckCreateView(CheckCreateView):
     model = ICMPStatusCheck
     form_class = ICMPStatusCheckForm
+    required_permission = 'cabotapp.add_icmpstatuscheck'
 
 
 class ICMPCheckUpdateView(CheckUpdateView):
     model = ICMPStatusCheck
     form_class = ICMPStatusCheckForm
+    required_permission = 'cabotapp.change_icmpstatuscheck'
 
 class GraphiteCheckUpdateView(CheckUpdateView):
     model = GraphiteStatusCheck
     form_class = GraphiteStatusCheckForm
+    required_permission = 'cabotapp.change_graphitestatuscheck'
 
 class GraphiteCheckCreateView(CheckCreateView):
     model = GraphiteStatusCheck
     form_class = GraphiteStatusCheckForm
+    required_permission = 'cabotapp.add_graphitestatuscheck'
 
 class HttpCheckCreateView(CheckCreateView):
     model = HttpStatusCheck
     form_class = HttpStatusCheckForm
+    required_permission = 'cabotapp.add_httpstatuscheck'
 
 
 class HttpCheckUpdateView(CheckUpdateView):
     model = HttpStatusCheck
     form_class = HttpStatusCheckForm
+    required_permission = 'cabotapp.change_httpstatuscheck'
 
 
 class JenkinsCheckCreateView(CheckCreateView):
     model = JenkinsStatusCheck
     form_class = JenkinsStatusCheckForm
+    required_permission = 'cabotapp.change_httpstatuscheck'
 
     def form_valid(self, form):
         form.instance.frequency = 1
@@ -471,6 +488,7 @@ class JenkinsCheckCreateView(CheckCreateView):
 class JenkinsCheckUpdateView(CheckUpdateView):
     model = JenkinsStatusCheck
     form_class = JenkinsStatusCheckForm
+    required_permission = 'cabotapp.change_jenkinsstatuscheck'
 
     def form_valid(self, form):
         form.instance.frequency = 1
@@ -485,11 +503,12 @@ class StatusCheckListView(LoginRequiredMixin, ListView):
         return StatusCheck.objects.all().order_by('name').prefetch_related('service_set', 'instance_set')
 
 
-class StatusCheckDeleteView(LoginRequiredMixin, DeleteView):
+class StatusCheckDeleteView(PermRequiredMixin, DeleteView):
     model = StatusCheck
     success_url = reverse_lazy('checks')
     context_object_name = 'check'
     template_name = 'cabotapp/statuscheck_confirm_delete.html'
+    required_permission = 'cabotapp.delete_statuscheck'
 
 
 class StatusCheckDetailView(LoginRequiredMixin, DetailView):
@@ -505,10 +524,11 @@ class StatusCheckDetailView(LoginRequiredMixin, DetailView):
         return super(StatusCheckDetailView, self).render_to_response(context, *args, **kwargs)
 
 
-class UserProfileUpdateView(LoginRequiredMixin, UpdateView):
+class UserProfileUpdateView(PermRequiredMixin, UpdateView):
     model = UserProfile
     success_url = reverse_lazy('subscriptions')
     form_class = UserProfileForm
+    required_permission = 'cabotapp.change_userprofile'
 
     def get_object(self, *args, **kwargs):
         try:
@@ -567,9 +587,10 @@ class ServiceDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class InstanceCreateView(LoginRequiredMixin, CreateView):
+class InstanceCreateView(PermRequiredMixin, CreateView):
     model = Instance
     form_class = InstanceForm
+    required_permission = 'cabotapp.add_instance'
 
     def form_valid(self, form):
         ret = super(InstanceCreateView, self).form_valid(form)
@@ -607,40 +628,45 @@ class InstanceCreateView(LoginRequiredMixin, CreateView):
 
         return initial
 
-class ServiceCreateView(LoginRequiredMixin, CreateView):
+class ServiceCreateView(PermRequiredMixin, CreateView):
     model = Service
     form_class = ServiceForm
+    required_permission = 'cabotapp.add_service'
 
     def get_success_url(self):
         return reverse('service', kwargs={'pk': self.object.id})
 
-class InstanceUpdateView(LoginRequiredMixin, UpdateView):
+class InstanceUpdateView(PermRequiredMixin, UpdateView):
     model = Instance
     form_class = InstanceForm
+    required_permission = 'cabotapp.change_instance'
 
     def get_success_url(self):
         return reverse('instance', kwargs={'pk': self.object.id})
 
-class ServiceUpdateView(LoginRequiredMixin, UpdateView):
+class ServiceUpdateView(PermRequiredMixin, UpdateView):
     model = Service
     form_class = ServiceForm
+    required_permission = 'cabotapp.change_service'
 
     def get_success_url(self):
         return reverse('service', kwargs={'pk': self.object.id})
 
 
-class ServiceDeleteView(LoginRequiredMixin, DeleteView):
+class ServiceDeleteView(PermRequiredMixin, DeleteView):
     model = Service
     success_url = reverse_lazy('services')
     context_object_name = 'service'
     template_name = 'cabotapp/service_confirm_delete.html'
+    required_permission = 'cabotapp.delete_service'
 
 
-class InstanceDeleteView(LoginRequiredMixin, DeleteView):
+class InstanceDeleteView(PermRequiredMixin, DeleteView):
     model = Instance
     success_url = reverse_lazy('instances')
     context_object_name = 'instance'
     template_name = 'cabotapp/instance_confirm_delete.html'
+    required_permission = 'cabotapp.delete_instance'
 
 
 class ShiftListView(LoginRequiredMixin, ListView):
