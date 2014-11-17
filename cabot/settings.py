@@ -59,6 +59,9 @@ MEDIA_URL = '/media/'
 # Example: "/home/media/media.lawrence.com/static/"
 STATIC_ROOT = os.path.join(PROJECT_ROOT, os.path.pardir, 'static/')
 
+# Page title
+SITE_TITLE = 'Cabot by Arachnys'
+
 COMPRESS_ROOT = STATIC_ROOT
 
 # URL prefix for static files.

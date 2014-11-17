@@ -14,3 +14,10 @@ def jenkins_human_url(jobname):
 def format_timedelta(delta):
     # Getting rid of microseconds.
     return str(timedelta(days=delta.days, seconds=delta.seconds))
+
+
+# http://stackoverflow.com/questions/433162/can-i-access-constants-in-settings-py-from-templates-in-django
+# "We're all consenting adults here"
+@register.simple_tag
+def settings_value(name):
+    return getattr(settings, name, "")

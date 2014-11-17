@@ -2,6 +2,8 @@
 
 {% load extra %}
 
+{% block title %}{{ block.super }} - {{ check.name }}{% endblock title %}
+
 {% block content %}
 
 <div class="row">

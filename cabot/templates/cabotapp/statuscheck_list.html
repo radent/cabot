@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 
+{% block title %}{{ block.super }} - Checks{% endblock title %}
+
 {% block content %}
 
 {% include 'cabotapp/_statuscheck_list.html' with checks_type="All" %}
